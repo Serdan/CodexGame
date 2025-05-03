@@ -13,9 +13,9 @@
 - Implemented greedy meshing for performance
 - Implemented directional lighting (ambient + diffuse)
 - Implemented ambient occlusion
+- Implemented world save/load functionality
 
 ## To Do
-- Add save/load functionality for world data
 - Set up CI/CD pipeline (e.g., GitHub Actions)
 - Improve documentation (XML comments, tutorials)
 

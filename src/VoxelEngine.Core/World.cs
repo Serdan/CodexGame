@@ -38,6 +38,22 @@ public class World
         var lz = Mod(z, Chunk.Size);
         chunk.SetVoxel(lx, ly, lz, id);
     }
+    /// <summary>
+    /// Enumerates all stored chunks and their flattened voxel data.
+    /// </summary>
+    public IEnumerable<(ChunkPosition Position, byte[] Voxels)> GetChunks()
+    {
+        foreach (var kvp in _chunks)
+            yield return (kvp.Key, kvp.Value.ToArray());
+    }
+
+    /// <summary>
+    /// Adds or replaces a chunk at the given position.
+    /// </summary>
+    public void AddChunk(ChunkPosition pos, Chunk chunk)
+    {
+        _chunks[pos] = chunk;
+    }
 
     private static int DivFloor(int a, int b)
     {

@@ -24,4 +24,33 @@ public class Chunk
         if (x < 0 || x >= Size || y < 0 || y >= Size || z < 0 || z >= Size)
             throw new ArgumentOutOfRangeException($"Coordinates out of range: ({x}, {y}, {z})");
     }
+    /// <summary>
+    /// Returns a flat copy of voxel data in x,y,z order.
+    /// </summary>
+    public byte[] ToArray()
+    {
+        var data = new byte[Size * Size * Size];
+        var index = 0;
+        for (var x = 0; x < Size; x++)
+            for (var y = 0; y < Size; y++)
+                for (var z = 0; z < Size; z++)
+                    data[index++] = _voxels[x, y, z];
+        return data;
+    }
+
+    /// <summary>
+    /// Creates a chunk from flat voxel data array.
+    /// </summary>
+    public static Chunk FromArray(byte[] data)
+    {
+        if (data.Length != Size * Size * Size)
+            throw new ArgumentException($"Data length must be {Size*Size*Size}", nameof(data));
+        var chunk = new Chunk();
+        var index = 0;
+        for (var x = 0; x < Size; x++)
+            for (var y = 0; y < Size; y++)
+                for (var z = 0; z < Size; z++)
+                    chunk._voxels[x, y, z] = data[index++];
+        return chunk;
+    }
 }
