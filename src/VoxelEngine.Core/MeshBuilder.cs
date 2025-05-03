@@ -3,9 +3,18 @@ namespace VoxelEngine.Core;
 using System.Collections.Generic;
 using System.Numerics;
 
+/// <summary>
+/// Builds optimized mesh data from voxel chunks using a greedy meshing algorithm.
+/// Generates vertex positions, indices, normals, and ambient occlusion values.
+/// </summary>
 public class MeshBuilder
 {
 
+    /// <summary>
+    /// Generates mesh data for the given voxel chunk.
+    /// </summary>
+    /// <param name="chunk">The voxel chunk to mesh.</param>
+    /// <returns>A MeshData record containing vertices, indices, normals, and ambient occlusion.</returns>
     public MeshData GenerateMesh(Chunk chunk)
     {
         var vertices = new List<float>();

@@ -8,8 +8,14 @@ using VoxelEngine.Core;
 
 namespace VoxelGame;
 
+/// <summary>
+/// Entry point for the VoxelGame sample application. Creates a window, builds a voxel mesh, and renders it with lighting and ambient occlusion.
+/// </summary>
 class Program
 {
+    /// <summary>
+    /// Application entry point. Builds a sample voxel mesh and starts the OpenTK render window.
+    /// </summary>
     static void Main()
     {
         // Build voxel chunk and mesh
@@ -188,7 +194,9 @@ void main()
     }
 }
 
-// Simple FPS-style camera
+/// <summary>
+/// Simple first-person camera supporting position, orientation (yaw/pitch), and movement controls.
+/// </summary>
 class Camera
 {
     public Vector3 Position;
@@ -197,17 +205,28 @@ class Camera
     public float Speed = 4f;
     public float Sensitivity = 45f;
 
+    /// <summary>
+    /// Initializes a new camera at the given position.
+    /// </summary>
+    /// <param name="position">Initial world-space position of the camera.</param>
     public Camera(Vector3 position)
     {
         Position = position;
     }
 
+    /// <summary>
+    /// Gets the normalized forward vector based on the camera's yaw and pitch.
+    /// </summary>
     public Vector3 Front => new Vector3(
         MathF.Cos(MathHelper.DegreesToRadians(Yaw)) * MathF.Cos(MathHelper.DegreesToRadians(Pitch)),
         MathF.Sin(MathHelper.DegreesToRadians(Pitch)),
         MathF.Sin(MathHelper.DegreesToRadians(Yaw)) * MathF.Cos(MathHelper.DegreesToRadians(Pitch))
     ).Normalized();
 
+    /// <summary>
+    /// Builds a view matrix looking from the camera's position along its forward vector.
+    /// </summary>
+    /// <returns>A view transform matrix.</returns>
     public Matrix4 GetViewMatrix()
         => Matrix4.LookAt(Position, Position + Front, Vector3.UnitY);
 }
