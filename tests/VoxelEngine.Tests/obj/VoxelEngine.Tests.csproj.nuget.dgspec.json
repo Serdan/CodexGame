@@ -1,0 +1,150 @@
+{
+  "format": 1,
+  "restore": {
+    "/mnt/z/projects/CodexGame/tests/VoxelEngine.Tests/VoxelEngine.Tests.csproj": {}
+  },
+  "projects": {
+    "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/VoxelEngine.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/VoxelEngine.Core.csproj",
+        "projectName": "VoxelEngine.Core",
+        "projectPath": "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/VoxelEngine.Core.csproj",
+        "packagesPath": "/home/dev/.nuget/packages/",
+        "outputPath": "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/dev/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.200"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/dev/.dotnet/sdk/9.0.203/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/mnt/z/projects/CodexGame/tests/VoxelEngine.Tests/VoxelEngine.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/mnt/z/projects/CodexGame/tests/VoxelEngine.Tests/VoxelEngine.Tests.csproj",
+        "projectName": "VoxelEngine.Tests",
+        "projectPath": "/mnt/z/projects/CodexGame/tests/VoxelEngine.Tests/VoxelEngine.Tests.csproj",
+        "packagesPath": "/home/dev/.nuget/packages/",
+        "outputPath": "/mnt/z/projects/CodexGame/tests/VoxelEngine.Tests/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/dev/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/VoxelEngine.Core.csproj": {
+                "projectPath": "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/VoxelEngine.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.200"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.12.0, )"
+            },
+            "coverlet.collector": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[6.0.4, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.9.2, )"
+            },
+            "xunit.runner.visualstudio": {
+              "target": "Package",
+              "version": "[2.8.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/home/dev/.dotnet/sdk/9.0.203/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

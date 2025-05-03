@@ -1,0 +1,11 @@
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/VoxelEngine.Core.GeneratedMSBuildEditorConfig.editorconfig
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/VoxelEngine.Core.AssemblyInfoInputs.cache
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/VoxelEngine.Core.AssemblyInfo.cs
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/VoxelEngine.Core.csproj.CoreCompileInputs.cache
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/bin/Debug/net9.0/VoxelEngine.Core.deps.json
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/bin/Debug/net9.0/VoxelEngine.Core.dll
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/bin/Debug/net9.0/VoxelEngine.Core.pdb
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/VoxelEngine.Core.dll
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/refint/VoxelEngine.Core.dll
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/VoxelEngine.Core.pdb
+/mnt/z/projects/CodexGame/src/VoxelEngine.Core/obj/Debug/net9.0/ref/VoxelEngine.Core.dll

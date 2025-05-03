@@ -1,0 +1,12 @@
+{
+  "projectFile": "VoxelEngine.sln",
+  "testProjects": [
+    "tests/VoxelEngine.Tests/VoxelEngine.Tests.csproj"
+  ],
+  "reporters": ["html", "progress"],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 50
+  }
+}
