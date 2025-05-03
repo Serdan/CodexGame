@@ -1,3 +1,11 @@
+# Workflow
+
+- Move selected task from "To Do" to "In Progress".
+- Implement code changes addressing the task.
+- Run builds, tests, and manual verification.
+- Move task from "In Progress" to "Completed".
+- Commit and push changes with appropriate message.
+
 # Progress
 
 ## Completed
@@ -15,10 +23,17 @@
 - Implemented ambient occlusion
 - Implemented world save/load functionality
 - Set up CI/CD pipeline (GitHub Actions)
+- Expanded terrain generation with sinusoidal heightmap
+- Added per-vertex colors (grass, dirt, stone)
+- Switched to per-voxel face mesh to fix face alignment
 - Added reticle overlay
 
 ## To Do
 - Improve documentation (XML comments, tutorials)
+- Implement multi-chunk world rendering with frustum culling
+- Add fog effects and skybox background
+- Add on-screen GUI (FPS counter, instructions)
+- Provide a usage tutorial or guide
 
 # Tasks
 
