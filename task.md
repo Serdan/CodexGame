@@ -8,12 +8,11 @@
 - Configured Coverlet for code coverage
 - Added Stryker mutation testing config
 - Added README.md
+- Integrated OpenTK for real-time 3D rendering
 
 ## To Do
-- Integrate OpenTK (or MonoGame) for real-time 3D rendering
 - Implement camera controls and input handling
 - Implement greedy meshing for performance
-- Add multi-chunk world management (World class)
 - Implement lighting (ambient occlusion / directional lighting)
 - Add save/load functionality for world data
 - Set up CI/CD pipeline (e.g., GitHub Actions)

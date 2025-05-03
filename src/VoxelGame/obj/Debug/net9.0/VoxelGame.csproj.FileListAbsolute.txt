@@ -16,3 +16,17 @@
 /mnt/z/projects/CodexGame/src/VoxelGame/obj/Debug/net9.0/VoxelGame.pdb
 /mnt/z/projects/CodexGame/src/VoxelGame/obj/Debug/net9.0/VoxelGame.genruntimeconfig.cache
 /mnt/z/projects/CodexGame/src/VoxelGame/obj/Debug/net9.0/ref/VoxelGame.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Audio.OpenAL.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Compute.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Core.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Graphics.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Input.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Mathematics.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Windowing.Common.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Windowing.Desktop.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/OpenTK.Windowing.GraphicsLibraryFramework.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/runtimes/linux-x64/native/libglfw.so.3
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/runtimes/osx-arm64/native/libglfw.3.dylib
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/runtimes/osx-x64/native/libglfw.3.dylib
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/runtimes/win-x64/native/glfw3.dll
+/mnt/z/projects/CodexGame/src/VoxelGame/bin/Debug/net9.0/runtimes/win-x86/native/glfw3.dll
