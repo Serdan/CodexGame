@@ -1,0 +1,12 @@
+# Ignore Visual Studio and .NET build artifacts
+bin/
+obj/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.vs
+*.exe
+*.pdb
+*.dll
+*.xml
