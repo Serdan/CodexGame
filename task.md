@@ -15,6 +15,7 @@
 - Implemented ambient occlusion
 - Implemented world save/load functionality
 - Set up CI/CD pipeline (GitHub Actions)
+- Added reticle overlay
 
 ## To Do
 - Improve documentation (XML comments, tutorials)

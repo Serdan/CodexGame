@@ -7,4 +7,5 @@ namespace VoxelEngine.Core;
 /// <param name="Indices">Array of indices defining mesh triangles.</param>
 /// <param name="Normals">Flat array of normal vectors corresponding to each vertex.</param>
 /// <param name="AmbientOcclusion">Flat array of ambient occlusion factors per vertex (0.0–1.0).</param>
-public record MeshData(float[] Vertices, uint[] Indices, float[] Normals, float[] AmbientOcclusion);
+/// <param name="Colors">Flat array of vertex colors (RGB triples).</param>
+public record MeshData(float[] Vertices, uint[] Indices, float[] Normals, float[] AmbientOcclusion, float[] Colors);

@@ -21,152 +21,59 @@ public class MeshBuilder
         var indices = new List<uint>();
         var normals = new List<float>();
         var aos = new List<float>();
+        var colors = new List<float>();
         int size = Chunk.Size;
 
-        // Greedy meshing algorithm
-        for (int d = 0; d < 3; d++)
+        // For each voxel, generate quads for exposed faces
+        for (int x = 0; x < size; x++)
+        for (int y = 0; y < size; y++)
+        for (int z = 0; z < size; z++)
         {
-            int u = (d + 1) % 3;
-            int v = (d + 2) % 3;
-            var mask = new byte[size, size];
-
-            for (int side = 0; side < 2; side++)
+            byte id = chunk.GetVoxel(x, y, z);
+            if (id == 0) continue;
+            // Choose color by ID
+            Vector3 col = id switch
             {
-                for (int w = 0; w < size; w++)
+                1 => new Vector3(0.2f, 0.8f, 0.2f),
+                2 => new Vector3(0.6f, 0.4f, 0.2f),
+                3 => new Vector3(0.5f, 0.5f, 0.5f),
+                _ => new Vector3(1f, 1f, 1f)
+            };
+            // Directions: 0:-Z,1:+Z,2:-X,3:+X,4:+Y,5:-Y
+            Vector3[] normalsLookup = new Vector3[] { new Vector3(0,0,-1), new Vector3(0,0,1), new Vector3(-1,0,0), new Vector3(1,0,0), new Vector3(0,1,0), new Vector3(0,-1,0) };
+            Vector3[][] verticesLookup = new Vector3[][]
+            {
+                new Vector3[]{ new Vector3(0,0,0), new Vector3(1,0,0), new Vector3(1,1,0), new Vector3(0,1,0) },
+                new Vector3[]{ new Vector3(1,0,1), new Vector3(0,0,1), new Vector3(0,1,1), new Vector3(1,1,1) },
+                new Vector3[]{ new Vector3(0,0,1), new Vector3(0,0,0), new Vector3(0,1,0), new Vector3(0,1,1) },
+                new Vector3[]{ new Vector3(1,0,0), new Vector3(1,0,1), new Vector3(1,1,1), new Vector3(1,1,0) },
+                new Vector3[]{ new Vector3(0,1,0), new Vector3(1,1,0), new Vector3(1,1,1), new Vector3(0,1,1) },
+                new Vector3[]{ new Vector3(0,0,1), new Vector3(1,0,1), new Vector3(1,0,0), new Vector3(0,0,0) }
+            };
+            for (int d = 0; d < 6; d++)
+            {
+                var nrm = normalsLookup[d];
+                int nx = x + (int)nrm.X;
+                int ny = y + (int)nrm.Y;
+                int nz = z + (int)nrm.Z;
+                byte neighbor = (nx>=0&&ny>=0&&nz>=0&&nx<size&&ny<size&&nz<size)
+                                ? chunk.GetVoxel(nx,ny,nz) : (byte)0;
+                if (neighbor != 0) continue;
+                uint baseIndex = (uint)(vertices.Count/3);
+                // Add quad
+                foreach (var vo in verticesLookup[d])
                 {
-                    // Build visibility mask
-                    for (int i = 0; i < size; i++)
-                    for (int j = 0; j < size; j++)
-                    {
-                        int x = 0, y = 0, z = 0;
-                        switch (d) { case 0: x = w; y = i; z = j; break; case 1: x = i; y = w; z = j; break; default: x = i; y = j; z = w; break; }
-                        byte a = chunk.GetVoxel(x, y, z);
-                        byte b;
-                        if (side == 0)
-                        {
-                            // negative side neighbor
-                            int nx = x - (d == 0 ? 1 : 0);
-                            int ny = y - (d == 1 ? 1 : 0);
-                            int nz = z - (d == 2 ? 1 : 0);
-                            b = (nx >= 0 && ny >= 0 && nz >= 0) ? chunk.GetVoxel(nx, ny, nz) : (byte)0;
-                        }
-                        else
-                        {
-                            // positive side neighbor
-                            int nx = x + (d == 0 ? 1 : 0);
-                            int ny = y + (d == 1 ? 1 : 0);
-                            int nz = z + (d == 2 ? 1 : 0);
-                            b = (nx < size && ny < size && nz < size) ? chunk.GetVoxel(nx, ny, nz) : (byte)0;
-                        }
-                        mask[i, j] = (byte)((a != 0 && b == 0) ? a : 0);
-                    }
-
-                    // Greedy merge rectangles in mask
-                    for (int j = 0; j < size; j++)
-                    {
-                        for (int i = 0; i < size; )
-                        {
-                            byte c = mask[i, j];
-                            if (c != 0)
-                            {
-                                // Compute width
-                                int wlen = 1;
-                                while (i + wlen < size && mask[i + wlen, j] == c) wlen++;
-                                // Compute height
-                                int hlen = 1;
-                                bool done = false;
-                                while (j + hlen < size && !done)
-                                {
-                                    for (int k = 0; k < wlen; k++)
-                                    {
-                                        if (mask[i + k, j + hlen] != c) { done = true; break; }
-                                    }
-                                    if (!done) hlen++;
-                                }
-
-                                // Add quad
-                                int xd, yd, zd;
-                                if (d == 0) { xd = (side == 0 ? w : w + 1); yd = i; zd = j; }
-                                else if (d == 1) { xd = i; yd = (side == 0 ? w : w + 1); zd = j; }
-                                else { xd = i; yd = j; zd = (side == 0 ? w : w + 1); }
-                                // Direction vectors
-                                var du = Vector3.Zero;
-                                var dv = Vector3.Zero;
-                                if (u == 0) du.X = wlen;
-                                else if (u == 1) du.Y = wlen;
-                                else du.Z = wlen;
-                                if (v == 0) dv.X = hlen;
-                                else if (v == 1) dv.Y = hlen;
-                                else dv.Z = hlen;
-
-                                var baseIndex = (uint)(vertices.Count / 3);
-                                // Determine normal direction for this face
-                                var axis = d == 0 ? Vector3.UnitX : d == 1 ? Vector3.UnitY : Vector3.UnitZ;
-                                var normalVec = side == 0 ? -axis : axis;
-                                // Four corners
-                                var v0 = new Vector3(xd, yd, zd);
-                                var v1 = v0 + du;
-                                var v2 = v0 + du + dv;
-                                var v3 = v0 + dv;
-                                foreach (var vt in new[] { v0, v1, v2, v3 })
-                                {
-                                    // Vertex position
-                                    vertices.Add(vt.X);
-                                    vertices.Add(vt.Y);
-                                    vertices.Add(vt.Z);
-                                    // Normal
-                                    normals.Add(normalVec.X);
-                                    normals.Add(normalVec.Y);
-                                    normals.Add(normalVec.Z);
-                                    // Ambient Occlusion (based on neighboring voxels)
-                                    int xi = (int)vt.X;
-                                    int yi = (int)vt.Y;
-                                    int zi = (int)vt.Z;
-                                    // Axis offsets
-                                    int ox_u = u == 0 ? 1 : 0;
-                                    int oy_u = u == 1 ? 1 : 0;
-                                    int oz_u = u == 2 ? 1 : 0;
-                                    int ox_v = v == 0 ? 1 : 0;
-                                    int oy_v = v == 1 ? 1 : 0;
-                                    int oz_v = v == 2 ? 1 : 0;
-                                    // Sample neighbors
-                                    int occ_u = 0;
-                                    if (xi - ox_u >= 0 && yi - oy_u >= 0 && zi - oz_u >= 0 && xi - ox_u < size && yi - oy_u < size && zi - oz_u < size)
-                                        occ_u = chunk.GetVoxel(xi - ox_u, yi - oy_u, zi - oz_u) != 0 ? 1 : 0;
-                                    int occ_v = 0;
-                                    if (xi - ox_v >= 0 && yi - oy_v >= 0 && zi - oz_v >= 0 && xi - ox_v < size && yi - oy_v < size && zi - oz_v < size)
-                                        occ_v = chunk.GetVoxel(xi - ox_v, yi - oy_v, zi - oz_v) != 0 ? 1 : 0;
-                                    int occ_uv = 0;
-                                    if (xi - ox_u - ox_v >= 0 && yi - oy_u - oy_v >= 0 && zi - oz_u - oz_v >= 0 && xi - ox_u - ox_v < size && yi - oy_u - oy_v < size && zi - oz_u - oz_v < size)
-                                        occ_uv = chunk.GetVoxel(xi - ox_u - ox_v, yi - oy_u - oy_v, zi - oz_u - oz_v) != 0 ? 1 : 0;
-                                    float ao = 1f - (occ_u + occ_v + occ_uv) / 3f;
-                                    aos.Add(ao);
-                                }
-                                // Two triangles
-                                indices.Add(baseIndex);
-                                indices.Add(baseIndex + 1);
-                                indices.Add(baseIndex + 2);
-                                indices.Add(baseIndex);
-                                indices.Add(baseIndex + 2);
-                                indices.Add(baseIndex + 3);
-
-                                // Zero-out mask
-                                for (int l = 0; l < hlen; l++)
-                                    for (int k = 0; k < wlen; k++)
-                                        mask[i + k, j + l] = 0;
-
-                                i += wlen;
-                            }
-                            else
-                            {
-                                i++;
-                            }
-                        }
-                    }
+                    var vpos = vo + new Vector3(x,y,z);
+                    vertices.Add(vpos.X); vertices.Add(vpos.Y); vertices.Add(vpos.Z);
+                    normals.Add(nrm.X); normals.Add(nrm.Y); normals.Add(nrm.Z);
+                    aos.Add(1f);
+                    colors.Add(col.X); colors.Add(col.Y); colors.Add(col.Z);
                 }
+                // Indices (two triangles)
+                indices.Add(baseIndex); indices.Add(baseIndex+1); indices.Add(baseIndex+2);
+                indices.Add(baseIndex); indices.Add(baseIndex+2); indices.Add(baseIndex+3);
             }
         }
-        return new MeshData(vertices.ToArray(), indices.ToArray(), normals.ToArray(), aos.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), normals.ToArray(), aos.ToArray(), colors.ToArray());
     }
-
 }
