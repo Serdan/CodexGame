@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "3uvLwdkWVH4=",
+  "dgSpecHash": "vu0xr0BVxPo=",
   "success": true,
-  "projectFilePath": "/mnt/z/projects/CodexGame/src/VoxelEngine.Core/VoxelEngine.Core.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "Z:\\projects\\CodexGame\\src\\VoxelEngine.Core\\VoxelEngine.Core.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\dev\\.nuget\\packages\\microsoft.netcore.app.ref\\9.0.3\\microsoft.netcore.app.ref.9.0.3.nupkg.sha512",
+    "C:\\Users\\dev\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\9.0.3\\microsoft.windowsdesktop.app.ref.9.0.3.nupkg.sha512",
+    "C:\\Users\\dev\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\9.0.3\\microsoft.aspnetcore.app.ref.9.0.3.nupkg.sha512"
+  ],
   "logs": []
 }

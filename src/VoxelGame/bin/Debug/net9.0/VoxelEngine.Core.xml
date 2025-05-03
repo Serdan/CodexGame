@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VoxelEngine.Core</name>
+    </assembly>
+    <members>
+        <member name="T:VoxelEngine.Core.Chunk">
+            <summary>
+            Represents a fixed-size 16×16×16 block of voxels.
+            Provides methods to get, set, and serialize voxel data.
+            </summary>
+        </member>
+        <member name="M:VoxelEngine.Core.Chunk.GetVoxel(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets the voxel ID at the specified local coordinates within the chunk.
+            </summary>
+            <param name="x">X-coordinate (0–15).</param>
+            <param name="y">Y-coordinate (0–15).</param>
+            <param name="z">Z-coordinate (0–15).</param>
+            <returns>The voxel ID at the given coordinates.</returns>
+        </member>
+        <member name="M:VoxelEngine.Core.Chunk.SetVoxel(System.Int32,System.Int32,System.Int32,System.Byte)">
+            <summary>
+            Sets the voxel ID at the specified local coordinates within the chunk.
+            </summary>
+            <param name="x">X-coordinate (0–15).</param>
+            <param name="y">Y-coordinate (0–15).</param>
+            <param name="z">Z-coordinate (0–15).</param>
+            <param name="id">The voxel ID to set.</param>
+        </member>
+        <member name="M:VoxelEngine.Core.Chunk.ToArray">
+            <summary>
+            Returns a flat copy of voxel data in x,y,z order.
+            </summary>
+            <summary>
+            Flattens the chunk's voxel data into a linear byte array in X-Y-Z order.
+            </summary>
+            <returns>A byte array of length Size³ containing voxel IDs.</returns>
+        </member>
+        <member name="M:VoxelEngine.Core.Chunk.FromArray(System.Byte[])">
+            <summary>
+            Creates a chunk from flat voxel data array.
+            </summary>
+            <summary>
+            Creates a new chunk from a flat voxel data array in X-Y-Z order.
+            </summary>
+            <param name="data">Flat array of voxel IDs (length must be Size³).</param>
+            <returns>A Chunk populated with the provided voxel data.</returns>
+        </member>
+        <member name="T:VoxelEngine.Core.GameEngine">
+            <summary>
+            A simple game engine loop that invokes update and render actions at a fixed interval.
+            </summary>
+        </member>
+        <member name="M:VoxelEngine.Core.GameEngine.#ctor(System.Action{System.Single},System.Action)">
+            <summary>
+            Initializes a new instance of the GameEngine class.
+            </summary>
+            <param name="update">Callback invoked each frame with delta time (seconds).</param>
+            <param name="render">Callback invoked each frame to render.</param>
+        </member>
+        <member name="M:VoxelEngine.Core.GameEngine.Run">
+            <summary>
+            Starts the game loop, repeatedly calling update and render until stopped.
+            </summary>
+        </member>
+        <member name="M:VoxelEngine.Core.GameEngine.Stop">
+            <summary>
+            Stops the game loop.
+            </summary>
+        </member>
+        <member name="T:VoxelEngine.Core.MeshBuilder">
+            <summary>
+            Builds optimized mesh data from voxel chunks using a greedy meshing algorithm.
+            Generates vertex positions, indices, normals, and ambient occlusion values.
+            </summary>
+        </member>
+        <member name="M:VoxelEngine.Core.MeshBuilder.GenerateMesh(VoxelEngine.Core.Chunk)">
+            <summary>
+            Generates mesh data for the given voxel chunk.
+            </summary>
+            <param name="chunk">The voxel chunk to mesh.</param>
+            <returns>A MeshData record containing vertices, indices, normals, and ambient occlusion.</returns>
+        </member>
+        <member name="T:VoxelEngine.Core.MeshData">
+            <summary>
+            Holds mesh buffer data generated from a voxel chunk.
+            </summary>
+            <param name="Vertices">Flat array of vertex positions (XYZ triples).</param>
+            <param name="Indices">Array of indices defining mesh triangles.</param>
+            <param name="Normals">Flat array of normal vectors corresponding to each vertex.</param>
+            <param name="AmbientOcclusion">Flat array of ambient occlusion factors per vertex (0.0–1.0).</param>
+            <param name="Colors">Flat array of vertex colors (RGB triples).</param>
+        </member>
+        <member name="M:VoxelEngine.Core.MeshData.#ctor(System.Single[],System.UInt32[],System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Holds mesh buffer data generated from a voxel chunk.
+            </summary>
+            <param name="Vertices">Flat array of vertex positions (XYZ triples).</param>
+            <param name="Indices">Array of indices defining mesh triangles.</param>
+            <param name="Normals">Flat array of normal vectors corresponding to each vertex.</param>
+            <param name="AmbientOcclusion">Flat array of ambient occlusion factors per vertex (0.0–1.0).</param>
+            <param name="Colors">Flat array of vertex colors (RGB triples).</param>
+        </member>
+        <member name="P:VoxelEngine.Core.MeshData.Vertices">
+            <summary>Flat array of vertex positions (XYZ triples).</summary>
+        </member>
+        <member name="P:VoxelEngine.Core.MeshData.Indices">
+            <summary>Array of indices defining mesh triangles.</summary>
+        </member>
+        <member name="P:VoxelEngine.Core.MeshData.Normals">
+            <summary>Flat array of normal vectors corresponding to each vertex.</summary>
+        </member>
+        <member name="P:VoxelEngine.Core.MeshData.AmbientOcclusion">
+            <summary>Flat array of ambient occlusion factors per vertex (0.0–1.0).</summary>
+        </member>
+        <member name="P:VoxelEngine.Core.MeshData.Colors">
+            <summary>Flat array of vertex colors (RGB triples).</summary>
+        </member>
+        <member name="T:VoxelEngine.Core.World">
+            <summary>
+            Represents a paged collection of voxel chunks organized in a 3D grid.
+            Allows setting and retrieving voxels in world coordinates across multiple chunks.
+            </summary>
+        </member>
+        <member name="M:VoxelEngine.Core.World.GetOrCreateChunk(VoxelEngine.Core.ChunkPosition)">
+            <summary>
+            Retrieves an existing chunk at the specified grid position or creates a new one if not present.
+            </summary>
+            <param name="pos">Chunk grid position.</param>
+            <returns>The chunk at the specified position.</returns>
+        </member>
+        <member name="M:VoxelEngine.Core.World.GetVoxel(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Gets the voxel ID at the given world-space coordinates.
+            </summary>
+            <param name="x">World X-coordinate.</param>
+            <param name="y">World Y-coordinate.</param>
+            <param name="z">World Z-coordinate.</param>
+            <returns>The voxel ID at the coordinates.</returns>
+        </member>
+        <member name="M:VoxelEngine.Core.World.SetVoxel(System.Int32,System.Int32,System.Int32,System.Byte)">
+            <summary>
+            Sets the voxel ID at the given world-space coordinates.
+            </summary>
+            <param name="x">World X-coordinate.</param>
+            <param name="y">World Y-coordinate.</param>
+            <param name="z">World Z-coordinate.</param>
+            <param name="id">Voxel ID to set.</param>
+        </member>
+        <member name="M:VoxelEngine.Core.World.GetChunks">
+            <summary>
+            Enumerates all stored chunks and their flattened voxel data.
+            </summary>
+            <summary>
+            Enumerates all stored chunks and their flattened voxel data.
+            </summary>
+            <returns>A sequence of chunk positions with their corresponding voxel arrays.</returns>
+        </member>
+        <member name="M:VoxelEngine.Core.World.AddChunk(VoxelEngine.Core.ChunkPosition,VoxelEngine.Core.Chunk)">
+            <summary>
+            Adds or replaces a chunk at the given position.
+            </summary>
+            <summary>
+            Adds a chunk at the specified grid position, replacing any existing chunk.
+            </summary>
+            <param name="pos">Chunk grid position.</param>
+            <param name="chunk">Chunk instance to add.</param>
+        </member>
+        <member name="T:VoxelEngine.Core.WorldSerializer">
+            <summary>
+            Provides methods to serialize and deserialize a World to and from JSON files.
+            </summary>
+        </member>
+        <member name="M:VoxelEngine.Core.WorldSerializer.Save(VoxelEngine.Core.World,System.String)">
+            <summary>
+            Saves the world to a JSON file at the given path.
+            </summary>
+            <summary>
+            Saves the world to a JSON file at the specified path.
+            </summary>
+            <param name="world">The World instance to serialize.</param>
+            <param name="path">File path where the JSON will be written.</param>
+        </member>
+        <member name="M:VoxelEngine.Core.WorldSerializer.Load(System.String)">
+            <summary>
+            Loads the world from a JSON file at the given path.
+            </summary>
+            <summary>
+            Loads a world from a JSON file at the specified path.
+            </summary>
+            <param name="path">File path of the JSON to read.</param>
+            <returns>A deserialized World instance.</returns>
+        </member>
+    </members>
+</doc>
