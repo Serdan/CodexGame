@@ -18,7 +18,7 @@ class Program
     /// </summary>
     static void Main()
     {
-        // Build voxel chunk with sinusoidal heightmap and layered colors
+        // Build a single terrain chunk with sinusoidal heightmap
         var chunk = new Chunk();
         int size = Chunk.Size;
         for (var x = 0; x < size; x++)
@@ -26,26 +26,22 @@ class Program
         {
             float fx = x / (float)size * MathF.PI * 2;
             float fz = z / (float)size * MathF.PI * 2;
-            // Combined sin height factor [0..1]
             float hf = (MathF.Sin(fx) + MathF.Sin(fz) + 2f) / 4f;
             int height = (int)(hf * (size - 1));
             if (height < 1) height = 1;
             for (var y = 0; y <= height; y++)
             {
-                byte id = y == height ? (byte)1 // grass
-                          : y >= height - 2 ? (byte)2 // dirt
-                          : (byte)3;            // stone
+                byte id = y == height ? (byte)1 : y >= height - 2 ? (byte)2 : (byte)3;
                 chunk.SetVoxel(x, y, z, id);
             }
         }
-
         var meshBuilder = new MeshBuilder();
-        // Initial mesh
+        // Initial mesh generation
         var mesh = meshBuilder.GenerateMesh(chunk);
+        var meshDirty = true;
+        bool wireframe = false;
         // Prepare reticle (simple crosshair)
         int lineShader = 0, lineVao = 0, lineVbo = 0;
-        // Flag to indicate mesh needs update
-        var meshDirty = true;
 
         var gameSettings = GameWindowSettings.Default;
         var nativeSettings = new NativeWindowSettings
@@ -90,6 +86,7 @@ class Program
             return false;
         }
         // Handle mouse clicks for block interaction
+        // Handle mouse clicks for block interaction
         window.MouseDown += args =>
         {
             if (args.Button == MouseButton.Left || args.Button == MouseButton.Right)
@@ -102,6 +99,15 @@ class Program
                         chunk.SetVoxel(px2, py2, pz2, 1);
                     meshDirty = true;
                 }
+            }
+        };
+        // Toggle wireframe mode
+        window.KeyDown += args =>
+        {
+            if (args.Key == Keys.F1)
+            {
+                wireframe = !wireframe;
+                GL.PolygonMode(MaterialFace.FrontAndBack, wireframe ? PolygonMode.Line : PolygonMode.Fill);
             }
         };
         int vbo = 0, nbo = 0, abo = 0, cbo = 0, ebo = 0, vao = 0, shaderProgram = 0;
@@ -122,16 +128,22 @@ out vec3 FragPos;
 out vec3 Normal;
 out float AO;
 out vec3 Color;
+out float Distance;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 void main()
 {
+    // World space position
     FragPos = vec3(model * vec4(aPosition, 1.0));
+    // View space for fog distance
+    vec4 posView = view * vec4(FragPos, 1.0);
+    Distance = length(posView.xyz);
+    // Transform normal
     Normal = mat3(transpose(inverse(model))) * aNormal;
     AO = aAO;
     Color = aColor;
-    gl_Position = projection * view * vec4(FragPos, 1.0);
+    gl_Position = projection * posView;
 }";
             var fsSource = @"
 #version 330 core
@@ -145,14 +157,11 @@ uniform vec3 lightColor;
 uniform float ambientStrength;
 void main()
 {
-    // Ambient with occlusion
     vec3 ambient = ambientStrength * lightColor * AO;
-    // Diffuse
     vec3 norm = normalize(Normal);
     float diff = max(dot(norm, normalize(-lightDir)), 0.0);
     vec3 diffuse = diff * lightColor;
-    vec3 result = (ambient + diffuse) * Color;
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4((ambient + diffuse) * Color, 1.0);
 }";
 
             var vs = GL.CreateShader(ShaderType.VertexShader);
@@ -177,41 +186,47 @@ void main()
             GL.Uniform3(GL.GetUniformLocation(shaderProgram, "lightDir"), new Vector3(-0.5f, -1.0f, -0.3f));
             GL.Uniform3(GL.GetUniformLocation(shaderProgram, "lightColor"), new Vector3(1.0f, 1.0f, 1.0f));
             GL.Uniform1(GL.GetUniformLocation(shaderProgram, "ambientStrength"), 0.3f);
+            // Fog parameters
+            GL.Uniform3(GL.GetUniformLocation(shaderProgram, "fogColor"), new Vector3(0.6f, 0.7f, 0.8f));
+            GL.Uniform1(GL.GetUniformLocation(shaderProgram, "fogStart"), 5.0f);
+            GL.Uniform1(GL.GetUniformLocation(shaderProgram, "fogEnd"), 20.0f);
 
             // Setup viewport
             GL.Viewport(0, 0, window.ClientSize.X, window.ClientSize.Y);
             // Setup viewport and capture cursor
             GL.Viewport(0, 0, window.ClientSize.X, window.ClientSize.Y);
             window.CursorState = CursorState.Grabbed;
-            // Setup buffers
+            // Setup VAO and buffer objects; load initial mesh data
             vao = GL.GenVertexArray();
             vbo = GL.GenBuffer();
+            nbo = GL.GenBuffer();
+            abo = GL.GenBuffer();
+            cbo = GL.GenBuffer();
             ebo = GL.GenBuffer();
             GL.BindVertexArray(vao);
+            // Position attribute
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
             GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(0);
             // Normal attribute
-            nbo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
             GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(1);
             // Ambient Occlusion attribute
-            abo = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
             GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, sizeof(float), 0);
+            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(2);
-            // Vertex color attribute
-            cbo = GL.GenBuffer();
+            // Color attribute
             GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
             GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(3);
+            // Element buffer for indices
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
             // Compile overlay shader for reticle
             var vsOverlay = @"#version 330 core
 layout(location=0) in vec2 aPos;
@@ -265,36 +280,18 @@ void main(){ FragColor = vec4(uColor,1); }";
         };
         window.RenderFrame += args =>
         {
-            // Update mesh on change
-            if (meshDirty)
-            {
-                mesh = meshBuilder.GenerateMesh(chunk);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
-                // Update color buffer
-                GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
-                meshDirty = false;
-            }
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.UseProgram(shaderProgram);
 
-            // static model transform
-            var model = Matrix4.Identity;
+            // Set view and projection once
             var view = camera.GetViewMatrix();
             var projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45f), window.Size.X / (float)window.Size.Y, 0.1f, 100f);
-
-            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "model"), false, ref model);
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "view"), false, ref view);
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "projection"), false, ref projection);
 
-            // Draw 3D mesh
+            // Draw single chunk mesh
+            var model = Matrix4.Identity;
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "model"), false, ref model);
             GL.BindVertexArray(vao);
             GL.DrawElements(PrimitiveType.Triangles, mesh.Indices.Length, DrawElementsType.UnsignedInt, 0);
             // Draw reticle overlay

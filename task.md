@@ -34,6 +34,7 @@
 - Add fog effects and skybox background
 - Add on-screen GUI (FPS counter, instructions)
 - Provide a usage tutorial or guide
+- Add debug wireframe toggle (F1 key)
 
 # Tasks
 
