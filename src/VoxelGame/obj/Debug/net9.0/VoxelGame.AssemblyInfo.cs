@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VoxelGame")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a6b4d54a0ed1bf251305393706ac27e61e934030")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0f78513d7c3c268ba9a8b183804cb09b9ebac0a4")]
 [assembly: System.Reflection.AssemblyProductAttribute("VoxelGame")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VoxelGame")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

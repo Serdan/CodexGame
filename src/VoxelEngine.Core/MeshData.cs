@@ -1,3 +1,3 @@
 namespace VoxelEngine.Core;
 
-public record MeshData(float[] Vertices, uint[] Indices);
+public record MeshData(float[] Vertices, uint[] Indices, float[] Normals, float[] AmbientOcclusion);

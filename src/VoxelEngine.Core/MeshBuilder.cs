@@ -10,6 +10,8 @@ public class MeshBuilder
     {
         var vertices = new List<float>();
         var indices = new List<uint>();
+        var normals = new List<float>();
+        var aos = new List<float>();
         int size = Chunk.Size;
 
         // Greedy meshing algorithm
@@ -89,6 +91,9 @@ public class MeshBuilder
                                 else dv.Z = hlen;
 
                                 var baseIndex = (uint)(vertices.Count / 3);
+                                // Determine normal direction for this face
+                                var axis = d == 0 ? Vector3.UnitX : d == 1 ? Vector3.UnitY : Vector3.UnitZ;
+                                var normalVec = side == 0 ? -axis : axis;
                                 // Four corners
                                 var v0 = new Vector3(xd, yd, zd);
                                 var v1 = v0 + du;
@@ -96,9 +101,37 @@ public class MeshBuilder
                                 var v3 = v0 + dv;
                                 foreach (var vt in new[] { v0, v1, v2, v3 })
                                 {
+                                    // Vertex position
                                     vertices.Add(vt.X);
                                     vertices.Add(vt.Y);
                                     vertices.Add(vt.Z);
+                                    // Normal
+                                    normals.Add(normalVec.X);
+                                    normals.Add(normalVec.Y);
+                                    normals.Add(normalVec.Z);
+                                    // Ambient Occlusion (based on neighboring voxels)
+                                    int xi = (int)vt.X;
+                                    int yi = (int)vt.Y;
+                                    int zi = (int)vt.Z;
+                                    // Axis offsets
+                                    int ox_u = u == 0 ? 1 : 0;
+                                    int oy_u = u == 1 ? 1 : 0;
+                                    int oz_u = u == 2 ? 1 : 0;
+                                    int ox_v = v == 0 ? 1 : 0;
+                                    int oy_v = v == 1 ? 1 : 0;
+                                    int oz_v = v == 2 ? 1 : 0;
+                                    // Sample neighbors
+                                    int occ_u = 0;
+                                    if (xi - ox_u >= 0 && yi - oy_u >= 0 && zi - oz_u >= 0 && xi - ox_u < size && yi - oy_u < size && zi - oz_u < size)
+                                        occ_u = chunk.GetVoxel(xi - ox_u, yi - oy_u, zi - oz_u) != 0 ? 1 : 0;
+                                    int occ_v = 0;
+                                    if (xi - ox_v >= 0 && yi - oy_v >= 0 && zi - oz_v >= 0 && xi - ox_v < size && yi - oy_v < size && zi - oz_v < size)
+                                        occ_v = chunk.GetVoxel(xi - ox_v, yi - oy_v, zi - oz_v) != 0 ? 1 : 0;
+                                    int occ_uv = 0;
+                                    if (xi - ox_u - ox_v >= 0 && yi - oy_u - oy_v >= 0 && zi - oz_u - oz_v >= 0 && xi - ox_u - ox_v < size && yi - oy_u - oy_v < size && zi - oz_u - oz_v < size)
+                                        occ_uv = chunk.GetVoxel(xi - ox_u - ox_v, yi - oy_u - oy_v, zi - oz_u - oz_v) != 0 ? 1 : 0;
+                                    float ao = 1f - (occ_u + occ_v + occ_uv) / 3f;
+                                    aos.Add(ao);
                                 }
                                 // Two triangles
                                 indices.Add(baseIndex);
@@ -124,7 +157,7 @@ public class MeshBuilder
                 }
             }
         }
-        return new MeshData(vertices.ToArray(), indices.ToArray());
+        return new MeshData(vertices.ToArray(), indices.ToArray(), normals.ToArray(), aos.ToArray());
     }
 
 }

@@ -11,9 +11,10 @@
 - Integrated OpenTK for real-time 3D rendering
 - Implemented camera controls and input handling
 - Implemented greedy meshing for performance
+- Implemented directional lighting (ambient + diffuse)
+- Implemented ambient occlusion
 
 ## To Do
-- Implement lighting (ambient occlusion / directional lighting)
 - Add save/load functionality for world data
 - Set up CI/CD pipeline (e.g., GitHub Actions)
 - Improve documentation (XML comments, tutorials)

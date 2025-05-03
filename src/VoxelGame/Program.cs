@@ -31,30 +31,52 @@ class Program
         using var window = new GameWindow(gameSettings, nativeSettings);
         // Camera for navigation
         var camera = new Camera(new Vector3(2.0f, 2.0f, 5.0f));
-        int vbo = 0, ebo = 0, vao = 0, shaderProgram = 0;
+        int vbo = 0, nbo = 0, abo = 0, ebo = 0, vao = 0, shaderProgram = 0;
 
         window.Load += () =>
         {
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             GL.Enable(EnableCap.DepthTest);
 
-            // Compile shaders
+            // Compile shaders with lighting and ambient occlusion
             var vsSource = @"
 #version 330 core
 layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in float aAO;
+out vec3 FragPos;
+out vec3 Normal;
+out float AO;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 void main()
 {
-    gl_Position = projection * view * model * vec4(aPosition, 1.0);
-}";
+    FragPos = vec3(model * vec4(aPosition, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    AO = aAO;
+    gl_Position = projection * view * vec4(FragPos, 1.0);
+";
             var fsSource = @"
 #version 330 core
+in vec3 FragPos;
+in vec3 Normal;
+in float AO;
 out vec4 FragColor;
+uniform vec3 lightDir;
+uniform vec3 lightColor;
+uniform vec3 objectColor;
+uniform float ambientStrength;
 void main()
 {
-    FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+    // Ambient with occlusion
+    vec3 ambient = ambientStrength * lightColor * AO;
+    // Diffuse
+    vec3 norm = normalize(Normal);
+    float diff = max(dot(norm, normalize(-lightDir)), 0.0);
+    vec3 diffuse = diff * lightColor;
+    vec3 result = (ambient + diffuse) * objectColor;
+    FragColor = vec4(result, 1.0);
 }";
 
             var vs = GL.CreateShader(ShaderType.VertexShader);
@@ -74,6 +96,12 @@ void main()
             CheckProgramLink(shaderProgram);
             GL.DeleteShader(vs);
             GL.DeleteShader(fs);
+            // Configure lighting uniforms
+            GL.UseProgram(shaderProgram);
+            GL.Uniform3(GL.GetUniformLocation(shaderProgram, "lightDir"), new Vector3(-0.5f, -1.0f, -0.3f));
+            GL.Uniform3(GL.GetUniformLocation(shaderProgram, "lightColor"), new Vector3(1.0f, 1.0f, 1.0f));
+            GL.Uniform3(GL.GetUniformLocation(shaderProgram, "objectColor"), new Vector3(1.0f, 0.5f, 0.2f));
+            GL.Uniform1(GL.GetUniformLocation(shaderProgram, "ambientStrength"), 0.3f);
 
             // Setup buffers
             vao = GL.GenVertexArray();
@@ -86,6 +114,18 @@ void main()
             GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
+            // Normal attribute
+            nbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(1);
+            // Ambient Occlusion attribute
+            abo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
+            GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, sizeof(float), 0);
+            GL.EnableVertexAttribArray(2);
         };
 
         window.RenderFrame += args =>
