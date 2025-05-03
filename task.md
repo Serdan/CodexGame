@@ -9,10 +9,10 @@
 - Added Stryker mutation testing config
 - Added README.md
 - Integrated OpenTK for real-time 3D rendering
+- Implemented camera controls and input handling
+- Implemented greedy meshing for performance
 
 ## To Do
-- Implement camera controls and input handling
-- Implement greedy meshing for performance
 - Implement lighting (ambient occlusion / directional lighting)
 - Add save/load functionality for world data
 - Set up CI/CD pipeline (e.g., GitHub Actions)
