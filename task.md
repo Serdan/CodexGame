@@ -35,6 +35,7 @@
 
 ## To Do
 - Implement multi-chunk world rendering with frustum culling
+ - Fix block add/remove functionality so mouse interactions update the world and mesh correctly
 - Add fog effects and skybox background
 - Add on-screen GUI (FPS counter, instructions)
 - Provide a usage tutorial or guide
