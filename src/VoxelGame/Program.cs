@@ -280,6 +280,23 @@ void main(){ FragColor = vec4(uColor,1); }";
         };
         window.RenderFrame += args =>
         {
+            // Rebuild mesh buffers if blocks have been added/removed
+            if (meshDirty)
+            {
+                mesh = meshBuilder.GenerateMesh(chunk);
+                GL.BindVertexArray(vao);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
+                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
+                GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
+                GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
+                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
+                meshDirty = false;
+            }
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.UseProgram(shaderProgram);
 
