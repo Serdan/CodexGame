@@ -1,29 +1,19 @@
-# Workflow
-
-- Create a new branch for the task (e.g., git checkout -b feature/<task-name>).
-- Move selected task from "To Do" to "In Progress".
-- Implement code changes addressing the task.
-- Run builds, tests, and manual verification.
-- Move task from "In Progress" to "Completed".
-- Commit changes to the branch with descriptive message.
-- Push branch to remote (git push -u origin feature/<task-name>).
-- Open a pull request and undergo code review.
-- Merge pull request into main and delete the branch.
-
 # Progress
 
 ## To Do
-- Add debug wireframe toggle (F1 key)
+## To Do
+- (none)
 
 ## In Progress
-## In Progress
-# (none)
+
 ## Completed
- - Fix block add/remove functionality so mouse interactions update the world and mesh correctly
- - Implement multi-chunk world rendering with frustum culling
- - Add fog effects and skybox background
- - Provide a usage tutorial or guide
- - Add on-screen GUI (FPS counter, instructions)
+- Create world generation library: added `VoxelEngine.WorldGeneration` project with noise providers, world generator, integration, and tests
+- Add debug wireframe toggle (F1 key)
+- Fix block add/remove functionality so mouse interactions update the world and mesh correctly
+- Implement multi-chunk world rendering with frustum culling
+- Add fog effects and skybox background
+- Provide a usage tutorial or guide
+- Add on-screen GUI (FPS counter, instructions)
 - Initialized .NET solution and projects
 - Implemented core classes: Chunk, MeshData, MeshBuilder, GameEngine
 - Created console sample game in VoxelGame
@@ -44,11 +34,10 @@
 - Added reticle overlay
 - Improve documentation (XML comments, tutorials)
 
-# Tasks
+# Project
 
 - Create a voxel engine (core functionality: chunks, mesh building, world management).
 - Create a sample game using voxels (console-based & real-time 3D with OpenTK/MonoGame).
-- Add more features as listed in progress section.
 
 # Tech
 
@@ -59,19 +48,39 @@
 - Git. Use commits as appropriate.
 - Add to list as needed.
 
-## Multi-chunk World Refactor Plan
-
-- Extract world construction into a BuildWorld(int extent) method that populates a World instance with multiple chunks.
-- Extract mesh generation and GPU resource setup into a SetupChunkMeshes(World, MeshBuilder) method that returns a list of (ChunkPosition pos, int vao, int indexCount).
-- In window.Load, call SetupChunkMeshes to initialize VAOs and index counts for each chunk in the GPU.
-- In window.RenderFrame, iterate over the chunk render data, set the model matrix per chunk, bind its VAO, and call DrawElements.
-- Remove legacy single-chunk mesh code once the multi-chunk path is verified.
-- Validate project builds and renders correctly after each refactor step.
-
 # C# style rules
 
 - File-scoped namespaces.
 - Prefer collection expressions.
 - Prefer 'var'.
 - Prefer immutable records.
+  
+## World Generation Library Design
+
+### Overview
+To support extensible and configurable world generation, we will introduce a new library project `VoxelEngine.WorldGeneration` that defines core interfaces, default noise-based generators, and integration points with `VoxelEngine.Core`.
+
+### 1. Core Interfaces
+- `INoiseProvider`: generates noise values for given coordinates and seed.
+- `IWorldGenerator`: produces raw `Chunk` data (block types, heights, biomes) for a given chunk position.
+
+### 2. Built-in Noise Implementations
+- `PerlinNoiseProvider`: classic Perlin noise
+- `SimplexNoiseProvider`: improved simplex noise
+- `LayeredNoiseProvider`: combines multiple `INoiseProvider`s with different scales and weights.
+
+### 3. Chunk-Level Generator API
+- `Chunk GenerateChunk(int chunkX, int chunkY, int chunkZ)`: Produces a `Chunk` instance with blocks populated based on noise, biomes, and features.
+
+### 4. Configuration & Extensibility
+- `WorldGenerationConfig`: parameters (seed, height scale, biome thresholds, resource distributions).
+- Support custom modules/plugins via DI of additional `IWorldFeature` implementations (e.g., caves, trees, ore veins).
+
+### 5. Integration with VoxelEngine.Core
+- `VoxelEngine.WorldGeneration` will reference `VoxelEngine.Core`.
+- Extend `World` and/or `GameEngine` to accept an `IWorldGenerator` for dynamic world creation.
+
+### 6. Testing Strategy
+- Deterministic tests by seeding `INoiseProvider` implementations.
+- Unit tests for `IWorldGenerator` producing expected block distributions, elevations, and biome maps.
 

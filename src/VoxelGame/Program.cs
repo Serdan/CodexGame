@@ -5,6 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using VoxelEngine.Core;
+using VoxelEngine.WorldGeneration;
 using System.Collections.Generic;
 
 namespace VoxelGame;
@@ -19,29 +20,20 @@ class Program
     /// </summary>
     static void Main()
     {
-        // Build a multi-chunk world with sinusoidal heightmap
+        // Build a multi-chunk world via procedural generation
         var world = new World();
-        int size = Chunk.Size;
-        // Number of chunks to render in each direction (world spans from -extent to +extent)
-        // Increased extent for larger world (more chunks) to provide more geometry and reduce framerate.
-        int extent = 3; // was 1
-        for (int cx = -extent; cx <= extent; cx++)
-            for (int cz = -extent; cz <= extent; cz++)
-                for (int x = 0; x < size; x++)
-                for (int z = 0; z < size; z++)
-                {
-                    float fx = x / (float)size * MathF.PI * 2;
-                    float fz = z / (float)size * MathF.PI * 2;
-                    float hf = (MathF.Sin(fx) + MathF.Sin(fz) + 2f) / 4f;
-                    int height = (int)(hf * (size - 1));
-                    if (height < 1) height = 1;
-                    var cchunk = world.GetOrCreateChunk(new ChunkPosition(cx, 0, cz));
-                    for (int y = 0; y <= height; y++)
-                    {
-                        byte id = y == height ? (byte)1 : y >= height - 2 ? (byte)2 : (byte)3;
-                        cchunk.SetVoxel(x, y, z, id);
-                    }
-                }
+        int extent = 3;
+        var config = new WorldGenerationConfig
+        {
+            Seed = 0,
+            Scale = 1.0 / Chunk.Size,
+            HeightScale = Chunk.Size * 2,
+            SurfaceBlockId = 1,
+            SubSurfaceBlockId = 2,
+            UnderBlockId = 3
+        };
+        var generator = new NoiseBasedWorldGenerator(config);
+        world.Populate(generator, extentX: extent, extentY: 0, extentZ: extent);
         var meshBuilder = new MeshBuilder();
         bool wireframe = false;
         List<(ChunkPosition Position, int Vao, int IndexCount)> chunkMeshes = new();
