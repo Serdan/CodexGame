@@ -112,6 +112,8 @@ class Program
         };
         int vbo = 0, nbo = 0, abo = 0, cbo = 0, ebo = 0, vao = 0, shaderProgram = 0;
 
+        // Window load: shaders, buffers, and scene initialization
+        int bgProgram = 0, bgVao = 0, bgVbo = 0;
         window.Load += () =>
         {
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -209,6 +211,49 @@ void main()
             GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(0);
+            // Background gradient quad and shader
+            var vsBgSource = @"#version 330 core
+layout(location = 0) in vec2 aPos;
+out vec2 vUV;
+void main() {
+    vUV = aPos * 0.5 + 0.5;
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}";
+            var fsBgSource = @"#version 330 core
+in vec2 vUV;
+out vec4 FragColor;
+uniform vec3 topColor;
+uniform vec3 bottomColor;
+void main() {
+    float t = vUV.y;
+    vec3 col = mix(bottomColor, topColor, t);
+    FragColor = vec4(col, 1.0);
+}";
+            // Compile background shader
+            var vsBg = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vsBg, vsBgSource);
+            GL.CompileShader(vsBg);
+            CheckShaderCompile(vsBg);
+            var fsBg = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fsBg, fsBgSource);
+            GL.CompileShader(fsBg);
+            CheckShaderCompile(fsBg);
+            bgProgram = GL.CreateProgram();
+            GL.AttachShader(bgProgram, vsBg);
+            GL.AttachShader(bgProgram, fsBg);
+            GL.LinkProgram(bgProgram);
+            CheckProgramLink(bgProgram);
+            GL.DeleteShader(vsBg);
+            GL.DeleteShader(fsBg);
+            // Setup background quad
+            float[] quadVerts = { -1f, -1f, 1f, -1f, 1f, 1f, -1f, -1f, 1f, 1f, -1f, 1f };
+            bgVao = GL.GenVertexArray();
+            bgVbo = GL.GenBuffer();
+            GL.BindVertexArray(bgVao);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, bgVbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, quadVerts.Length * sizeof(float), quadVerts, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
             // Normal attribute
             GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
             GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
@@ -297,7 +342,15 @@ void main(){ FragColor = vec4(uColor,1); }";
                 GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
                 meshDirty = false;
             }
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            // Draw background gradient
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Disable(EnableCap.DepthTest);
+            GL.UseProgram(bgProgram);
+            GL.BindVertexArray(bgVao);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
+            GL.Enable(EnableCap.DepthTest);
+            // Clear depth for 3D scene
+            GL.Clear(ClearBufferMask.DepthBufferBit);
             GL.UseProgram(shaderProgram);
 
             // Set view and projection once
