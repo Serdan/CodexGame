@@ -149,14 +149,14 @@ void main()
     Color = aColor;
     gl_Position = projection * posView;
 }";
-            // Debug fragment shader: pass through vertex color
+            // Debug fragment shader: visualize ambient occlusion
             var fsSource = @"
 #version 330 core
-in vec3 Color;
+in float AO;
 out vec4 FragColor;
 void main()
 {
-    FragColor = vec4(Color, 1.0);
+    FragColor = vec4(AO, AO, AO, 1.0);
 }";
 
             var vs = GL.CreateShader(ShaderType.VertexShader);
