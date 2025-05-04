@@ -342,6 +342,8 @@ void main(){ FragColor = vec4(uColor,1); }";
                 GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
                 meshDirty = false;
             }
+            // Debug: print mesh data counts
+            Console.WriteLine($"[Debug] Mesh vertices={mesh.Vertices.Length}, indices={mesh.Indices.Length}, framesDirty={meshDirty}");
             // Clear screen and depth buffer for 3D scene
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.UseProgram(shaderProgram);
