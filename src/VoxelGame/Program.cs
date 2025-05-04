@@ -22,7 +22,9 @@ class Program
         // Build a multi-chunk world with sinusoidal heightmap
         var world = new World();
         int size = Chunk.Size;
-        int extent = 1; // number of chunks in each direction
+        // Number of chunks to render in each direction (world spans from -extent to +extent)
+        // Increased extent for larger world (more chunks) to provide more geometry and reduce framerate.
+        int extent = 3; // was 1
         for (int cx = -extent; cx <= extent; cx++)
             for (int cz = -extent; cz <= extent; cz++)
                 for (int x = 0; x < size; x++)
@@ -257,6 +259,9 @@ void main(){ FragColor = vec4(uColor,1); }";
             camera.Pitch -= args.DeltaY * mouseSensitivity;
             camera.Pitch = MathHelper.Clamp(camera.Pitch, -89f, 89f);
         };
+        // Track and display FPS and instructions in window title
+        double fpsTime = 0.0;
+        int fpsFrames = 0;
         window.RenderFrame += args =>
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -286,6 +291,15 @@ void main(){ FragColor = vec4(uColor,1); }";
             GL.Enable(EnableCap.DepthTest);
 
             window.SwapBuffers();
+            // Update FPS counter and title once per second
+            fpsFrames++;
+            fpsTime += args.Time;
+            if (fpsTime >= 1.0)
+            {
+                window.Title = $"Voxel Game - FPS: {fpsFrames} | WASD: Move, LMB: Remove, RMB: Add, F1: Toggle Wireframe";
+                fpsFrames = 0;
+                fpsTime -= 1.0;
+            }
         };
 
         window.UpdateFrame += args =>
