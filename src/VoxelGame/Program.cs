@@ -110,12 +110,9 @@ class Program
                 GL.PolygonMode(MaterialFace.FrontAndBack, wireframe ? PolygonMode.Line : PolygonMode.Fill);
             }
         };
-        int vbo = 0, nbo = 0, abo = 0, cbo = 0, ebo = 0, vao = 0, shaderProgram = 0;
+        int vbo = 0, ebo = 0, vao = 0, shaderProgram = 0;
 
         // Window load: shaders, buffers, and scene initialization
-        int bgProgram = 0, bgVao = 0, bgVbo = 0;
-        // Minimal triangle test program
-        int testProgram = 0, testVao = 0, testVbo = 0;
         window.Load += () =>
         {
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -149,15 +146,35 @@ void main()
     Color = aColor;
     gl_Position = projection * posView;
 }";
-            // Debug fragment shader: visualize normals via color encoding
+            // Fragment shader: lighting with ambient occlusion and fog
             var fsSource = @"
 #version 330 core
+in vec3 FragPos;
 in vec3 Normal;
+in float AO;
+in vec3 Color;
+in float Distance;
 out vec4 FragColor;
+uniform vec3 lightDir;
+uniform vec3 lightColor;
+uniform float ambientStrength;
+uniform vec3 fogColor;
+uniform float fogStart;
+uniform float fogEnd;
 void main()
 {
-    vec3 n = normalize(Normal) * 0.5 + 0.5;
-    FragColor = vec4(n, 1.0);
+    // ambient component
+    vec3 ambient = ambientStrength * lightColor * AO;
+    // diffuse component
+    vec3 norm = normalize(Normal);
+    float diff = max(dot(norm, normalize(-lightDir)), 0.0);
+    vec3 diffuse = diff * lightColor;
+    // combine lighting with vertex color
+    vec3 result = (ambient + diffuse) * Color;
+    // apply fog based on distance
+    float fogFactor = clamp((fogEnd - Distance) / (fogEnd - fogStart), 0.0, 1.0);
+    vec3 finalColor = mix(fogColor, result, fogFactor);
+    FragColor = vec4(finalColor, 1.0);
 }";
 
             var vs = GL.CreateShader(ShaderType.VertexShader);
@@ -192,80 +209,46 @@ void main()
             // Setup viewport and capture cursor
             GL.Viewport(0, 0, window.ClientSize.X, window.ClientSize.Y);
             window.CursorState = CursorState.Grabbed;
-            // Setup VAO and buffer objects; load initial mesh data
+            // Setup VAO and buffer objects; load initial mesh data (interleaved)
             vao = GL.GenVertexArray();
             vbo = GL.GenBuffer();
-            nbo = GL.GenBuffer();
-            abo = GL.GenBuffer();
-            cbo = GL.GenBuffer();
             ebo = GL.GenBuffer();
             GL.BindVertexArray(vao);
-            // Position attribute
+            // Build interleaved buffer: position (3), normal (3), AO (1), color (3)
+            int vertexCount = mesh.Vertices.Length / 3;
+            var interleaved = new float[vertexCount * 10];
+            for (int i = 0; i < vertexCount; i++)
+            {
+                int baseIdx = i * 10;
+                interleaved[baseIdx + 0] = mesh.Vertices[i * 3 + 0];
+                interleaved[baseIdx + 1] = mesh.Vertices[i * 3 + 1];
+                interleaved[baseIdx + 2] = mesh.Vertices[i * 3 + 2];
+                interleaved[baseIdx + 3] = mesh.Normals[i * 3 + 0];
+                interleaved[baseIdx + 4] = mesh.Normals[i * 3 + 1];
+                interleaved[baseIdx + 5] = mesh.Normals[i * 3 + 2];
+                interleaved[baseIdx + 6] = mesh.AmbientOcclusion[i];
+                interleaved[baseIdx + 7] = mesh.Colors[i * 3 + 0];
+                interleaved[baseIdx + 8] = mesh.Colors[i * 3 + 1];
+                interleaved[baseIdx + 9] = mesh.Colors[i * 3 + 2];
+            }
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(0);
-            // Background gradient quad and shader
-            var vsBgSource = @"#version 330 core
-layout(location = 0) in vec2 aPos;
-out vec2 vUV;
-void main() {
-    vUV = aPos * 0.5 + 0.5;
-    gl_Position = vec4(aPos, 0.0, 1.0);
-}";
-            var fsBgSource = @"#version 330 core
-in vec2 vUV;
-out vec4 FragColor;
-uniform vec3 topColor;
-uniform vec3 bottomColor;
-void main() {
-    float t = vUV.y;
-    vec3 col = mix(bottomColor, topColor, t);
-    FragColor = vec4(col, 1.0);
-}";
-            // Compile background shader
-            var vsBg = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vsBg, vsBgSource);
-            GL.CompileShader(vsBg);
-            CheckShaderCompile(vsBg);
-            var fsBg = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fsBg, fsBgSource);
-            GL.CompileShader(fsBg);
-            CheckShaderCompile(fsBg);
-            bgProgram = GL.CreateProgram();
-            GL.AttachShader(bgProgram, vsBg);
-            GL.AttachShader(bgProgram, fsBg);
-            GL.LinkProgram(bgProgram);
-            CheckProgramLink(bgProgram);
-            GL.DeleteShader(vsBg);
-            GL.DeleteShader(fsBg);
-            // Setup background quad
-            float[] quadVerts = { -1f, -1f, 1f, -1f, 1f, 1f, -1f, -1f, 1f, 1f, -1f, 1f };
-            bgVao = GL.GenVertexArray();
-            bgVbo = GL.GenBuffer();
-            GL.BindVertexArray(bgVao);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, bgVbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, quadVerts.Length * sizeof(float), quadVerts, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
-            GL.EnableVertexAttribArray(0);
-            // Normal attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(1);
-            // Ambient Occlusion attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(2);
-            // Color attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(3);
-            // Element buffer for indices
+            GL.BufferData(BufferTarget.ArrayBuffer, interleaved.Length * sizeof(float), interleaved, BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
             GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
+            const int stride = 10 * sizeof(float);
+            // Position attribute
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, 0);
+            GL.EnableVertexAttribArray(0);
+            // Normal attribute
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
+            GL.EnableVertexAttribArray(1);
+            // Ambient Occlusion attribute
+            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, stride, 6 * sizeof(float));
+            GL.EnableVertexAttribArray(2);
+            // Color attribute
+            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, stride, 7 * sizeof(float));
+            GL.EnableVertexAttribArray(3);
+            // Compile overlay shader for reticle
             // Compile overlay shader for reticle
             var vsOverlay = @"#version 330 core
 layout(location=0) in vec2 aPos;
@@ -301,42 +284,6 @@ void main(){ FragColor = vec4(uColor,1); }";
             GL.BufferData(BufferTarget.ArrayBuffer, reticle.Length * sizeof(float), reticle, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
-            // Minimal triangle test
-            var vsTestSource = @"#version 330 core
-layout(location = 0) in vec2 aPos;
-void main() {
-    gl_Position = vec4(aPos, 0.0, 1.0);
-}";
-            var fsTestSource = @"#version 330 core
-out vec4 FragColor;
-void main() {
-    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-}";
-            // Compile test shaders
-            var vsTest = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vsTest, vsTestSource);
-            GL.CompileShader(vsTest);
-            CheckShaderCompile(vsTest);
-            var fsTest = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fsTest, fsTestSource);
-            GL.CompileShader(fsTest);
-            CheckShaderCompile(fsTest);
-            testProgram = GL.CreateProgram();
-            GL.AttachShader(testProgram, vsTest);
-            GL.AttachShader(testProgram, fsTest);
-            GL.LinkProgram(testProgram);
-            CheckProgramLink(testProgram);
-            GL.DeleteShader(vsTest);
-            GL.DeleteShader(fsTest);
-            // Setup test triangle in NDC
-            float[] triVerts = { 0.0f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f };
-            testVao = GL.GenVertexArray();
-            testVbo = GL.GenBuffer();
-            GL.BindVertexArray(testVao);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, testVbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, triVerts.Length * sizeof(float), triVerts, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
-            GL.EnableVertexAttribArray(0);
         };
 
         // Adjust viewport on window resize
@@ -359,29 +306,30 @@ void main() {
             if (meshDirty)
             {
                 mesh = meshBuilder.GenerateMesh(chunk);
-                GL.BindVertexArray(vao);
+                // Rebuild interleaved vertex buffer
+                int vCount2 = mesh.Vertices.Length / 3;
+                float[] interleaved2 = new float[vCount2 * 10];
+                for (int i = 0; i < vCount2; i++)
+                {
+                    interleaved2[i*10 + 0] = mesh.Vertices[i*3 + 0];
+                    interleaved2[i*10 + 1] = mesh.Vertices[i*3 + 1];
+                    interleaved2[i*10 + 2] = mesh.Vertices[i*3 + 2];
+                    interleaved2[i*10 + 3] = mesh.Normals[i*3 + 0];
+                    interleaved2[i*10 + 4] = mesh.Normals[i*3 + 1];
+                    interleaved2[i*10 + 5] = mesh.Normals[i*3 + 2];
+                    interleaved2[i*10 + 6] = mesh.AmbientOcclusion[i];
+                    interleaved2[i*10 + 7] = mesh.Colors[i*3 + 0];
+                    interleaved2[i*10 + 8] = mesh.Colors[i*3 + 1];
+                    interleaved2[i*10 + 9] = mesh.Colors[i*3 + 2];
+                }
                 GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
-                GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, interleaved2.Length * sizeof(float), interleaved2, BufferUsageHint.StaticDraw);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
                 GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
                 meshDirty = false;
             }
-            // Debug: print mesh data counts
-            Console.WriteLine($"[Debug] Mesh vertices={mesh.Vertices.Length}, indices={mesh.Indices.Length}, framesDirty={meshDirty}");
             // Clear screen and depth buffer for 3D scene
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            // Debug: draw minimal red triangle to verify pipeline
-            GL.Disable(EnableCap.DepthTest);
-            GL.UseProgram(testProgram);
-            GL.BindVertexArray(testVao);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-            GL.Enable(EnableCap.DepthTest);
             GL.UseProgram(shaderProgram);
 
             // Set view and projection once
