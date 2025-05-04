@@ -12,7 +12,17 @@
 
 # Progress
 
+## To Do
+- Add fog effects and skybox background
+- Add on-screen GUI (FPS counter, instructions)
+- Provide a usage tutorial or guide
+- Add debug wireframe toggle (F1 key)
+
+## In Progress
+
 ## Completed
+- Fix block add/remove functionality so mouse interactions update the world and mesh correctly
+- Implement multi-chunk world rendering with frustum culling
 - Initialized .NET solution and projects
 - Implemented core classes: Chunk, MeshData, MeshBuilder, GameEngine
 - Created console sample game in VoxelGame
@@ -32,14 +42,6 @@
 - Switched to per-voxel face mesh to fix face alignment
 - Added reticle overlay
 - Improve documentation (XML comments, tutorials)
-
-## To Do
-- Implement multi-chunk world rendering with frustum culling
- - Fix block add/remove functionality so mouse interactions update the world and mesh correctly
-- Add fog effects and skybox background
-- Add on-screen GUI (FPS counter, instructions)
-- Provide a usage tutorial or guide
-- Add debug wireframe toggle (F1 key)
 
 # Tasks
 
