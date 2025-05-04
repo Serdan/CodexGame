@@ -5,6 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using VoxelEngine.Core;
+using System.Collections.Generic;
 
 namespace VoxelGame;
 
@@ -18,28 +19,30 @@ class Program
     /// </summary>
     static void Main()
     {
-        // Build a single terrain chunk with sinusoidal heightmap
-        var chunk = new Chunk();
+        // Build a multi-chunk world with sinusoidal heightmap
+        var world = new World();
         int size = Chunk.Size;
-        for (var x = 0; x < size; x++)
-        for (var z = 0; z < size; z++)
-        {
-            float fx = x / (float)size * MathF.PI * 2;
-            float fz = z / (float)size * MathF.PI * 2;
-            float hf = (MathF.Sin(fx) + MathF.Sin(fz) + 2f) / 4f;
-            int height = (int)(hf * (size - 1));
-            if (height < 1) height = 1;
-            for (var y = 0; y <= height; y++)
-            {
-                byte id = y == height ? (byte)1 : y >= height - 2 ? (byte)2 : (byte)3;
-                chunk.SetVoxel(x, y, z, id);
-            }
-        }
+        int extent = 1; // number of chunks in each direction
+        for (int cx = -extent; cx <= extent; cx++)
+            for (int cz = -extent; cz <= extent; cz++)
+                for (int x = 0; x < size; x++)
+                for (int z = 0; z < size; z++)
+                {
+                    float fx = x / (float)size * MathF.PI * 2;
+                    float fz = z / (float)size * MathF.PI * 2;
+                    float hf = (MathF.Sin(fx) + MathF.Sin(fz) + 2f) / 4f;
+                    int height = (int)(hf * (size - 1));
+                    if (height < 1) height = 1;
+                    var cchunk = world.GetOrCreateChunk(new ChunkPosition(cx, 0, cz));
+                    for (int y = 0; y <= height; y++)
+                    {
+                        byte id = y == height ? (byte)1 : y >= height - 2 ? (byte)2 : (byte)3;
+                        cchunk.SetVoxel(x, y, z, id);
+                    }
+                }
         var meshBuilder = new MeshBuilder();
-        // Initial mesh generation
-        var mesh = meshBuilder.GenerateMesh(chunk);
-        var meshDirty = true;
         bool wireframe = false;
+        List<(ChunkPosition Position, int Vao, int IndexCount)> chunkMeshes = new();
         // Prepare reticle (simple crosshair)
         int lineShader = 0, lineVao = 0, lineVbo = 0;
 
@@ -76,7 +79,7 @@ class Program
                 int z = (int)MathF.Floor(pos.Z);
                 if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size || z < 0 || z >= Chunk.Size)
                     continue;
-                if (chunk.GetVoxel(x, y, z) != 0)
+                if (world.GetVoxel(x, y, z) != 0)
                 {
                     hx = x; hy = y; hz = z;
                     return true;
@@ -94,10 +97,9 @@ class Program
                 if (Raycast(out var hx, out var hy, out var hz, out var px2, out var py2, out var pz2))
                 {
                     if (args.Button == MouseButton.Left)
-                        chunk.SetVoxel(hx, hy, hz, 0);
+                        world.SetVoxel(hx, hy, hz, 0);
                     else
-                        chunk.SetVoxel(px2, py2, pz2, 1);
-                    meshDirty = true;
+                        world.SetVoxel(px2, py2, pz2, 1);
                 }
             }
         };
@@ -110,7 +112,7 @@ class Program
                 GL.PolygonMode(MaterialFace.FrontAndBack, wireframe ? PolygonMode.Line : PolygonMode.Fill);
             }
         };
-        int vbo = 0, nbo = 0, abo = 0, cbo = 0, ebo = 0, vao = 0, shaderProgram = 0;
+        int shaderProgram = 0;
 
         window.Load += () =>
         {
@@ -196,37 +198,8 @@ void main()
             // Setup viewport and capture cursor
             GL.Viewport(0, 0, window.ClientSize.X, window.ClientSize.Y);
             window.CursorState = CursorState.Grabbed;
-            // Setup VAO and buffer objects; load initial mesh data
-            vao = GL.GenVertexArray();
-            vbo = GL.GenBuffer();
-            nbo = GL.GenBuffer();
-            abo = GL.GenBuffer();
-            cbo = GL.GenBuffer();
-            ebo = GL.GenBuffer();
-            GL.BindVertexArray(vao);
-            // Position attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(0);
-            // Normal attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(1);
-            // Ambient Occlusion attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(2);
-            // Color attribute
-            GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 0, 0);
-            GL.EnableVertexAttribArray(3);
-            // Element buffer for indices
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
+            // Generate and upload meshes for all chunks
+            chunkMeshes = SetupChunkMeshes(world, meshBuilder);
             // Compile overlay shader for reticle
             var vsOverlay = @"#version 330 core
 layout(location=0) in vec2 aPos;
@@ -289,11 +262,14 @@ void main(){ FragColor = vec4(uColor,1); }";
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "view"), false, ref view);
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "projection"), false, ref projection);
 
-            // Draw single chunk mesh
-            var model = Matrix4.Identity;
-            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "model"), false, ref model);
-            GL.BindVertexArray(vao);
-            GL.DrawElements(PrimitiveType.Triangles, mesh.Indices.Length, DrawElementsType.UnsignedInt, 0);
+            // Draw all chunk meshes
+            foreach (var (pos, vaoID, count) in chunkMeshes)
+            {
+                var model = Matrix4.CreateTranslation(new Vector3(pos.X * Chunk.Size, pos.Y * Chunk.Size, pos.Z * Chunk.Size));
+                GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram, "model"), false, ref model);
+                GL.BindVertexArray(vaoID);
+                GL.DrawElements(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, 0);
+            }
             // Draw reticle overlay
             GL.Disable(EnableCap.DepthTest);
             GL.UseProgram(lineShader);
@@ -344,6 +320,46 @@ void main(){ FragColor = vec4(uColor,1); }";
         GL.GetProgram(program, GetProgramParameterName.LinkStatus, out var success);
         if (success == 0)
             Console.WriteLine(GL.GetProgramInfoLog(program));
+    }
+    
+    /// <summary>
+    /// Generates meshes for all chunks in the world, creating VAOs and buffer objects.
+    /// </summary>
+    private static List<(ChunkPosition Position, int Vao, int IndexCount)> SetupChunkMeshes(World world, MeshBuilder meshBuilder)
+    {
+        var list = new List<(ChunkPosition Position, int Vao, int IndexCount)>();
+        foreach (var (pos, voxels) in world.GetChunks())
+        {
+            var chunk = world.GetOrCreateChunk(pos);
+            var mesh = meshBuilder.GenerateMesh(chunk);
+            int vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+            int vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Vertices.Length * sizeof(float), mesh.Vertices, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(0);
+            int nbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, nbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Normals.Length * sizeof(float), mesh.Normals, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(1);
+            int abo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, abo);
+            GL.BufferData(BufferTarget.ArrayBuffer, mesh.AmbientOcclusion.Length * sizeof(float), mesh.AmbientOcclusion, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(2);
+            int cbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, cbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, mesh.Colors.Length * sizeof(float), mesh.Colors, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(3);
+            int ebo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
+            list.Add((pos, vao, mesh.Indices.Length));
+        }
+        return list;
     }
 }
 
