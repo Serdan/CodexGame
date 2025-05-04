@@ -342,15 +342,8 @@ void main(){ FragColor = vec4(uColor,1); }";
                 GL.BufferData(BufferTarget.ElementArrayBuffer, mesh.Indices.Length * sizeof(uint), mesh.Indices, BufferUsageHint.StaticDraw);
                 meshDirty = false;
             }
-            // Draw background gradient
-            GL.Clear(ClearBufferMask.ColorBufferBit);
-            GL.Disable(EnableCap.DepthTest);
-            GL.UseProgram(bgProgram);
-            GL.BindVertexArray(bgVao);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
-            GL.Enable(EnableCap.DepthTest);
-            // Clear depth for 3D scene
-            GL.Clear(ClearBufferMask.DepthBufferBit);
+            // Clear screen and depth buffer for 3D scene
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.UseProgram(shaderProgram);
 
             // Set view and projection once
