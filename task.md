@@ -1,10 +1,14 @@
 # Workflow
 
+- Create a new branch for the task (e.g., git checkout -b feature/<task-name>).
 - Move selected task from "To Do" to "In Progress".
 - Implement code changes addressing the task.
 - Run builds, tests, and manual verification.
 - Move task from "In Progress" to "Completed".
-- Commit and push changes with appropriate message.
+- Commit changes to the branch with descriptive message.
+- Push branch to remote (git push -u origin feature/<task-name>).
+- Open a pull request and undergo code review.
+- Merge pull request into main and delete the branch.
 
 # Progress
 
@@ -27,9 +31,9 @@
 - Added per-vertex colors (grass, dirt, stone)
 - Switched to per-voxel face mesh to fix face alignment
 - Added reticle overlay
+- Improve documentation (XML comments, tutorials)
 
 ## To Do
-- Improve documentation (XML comments, tutorials)
 - Implement multi-chunk world rendering with frustum culling
 - Add fog effects and skybox background
 - Add on-screen GUI (FPS counter, instructions)
