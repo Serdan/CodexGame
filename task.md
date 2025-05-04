@@ -13,11 +13,13 @@
 # Progress
 
 ## To Do
+- Add multiple chunks
 - Add on-screen GUI (FPS counter, instructions)
 - Provide a usage tutorial or guide
 - Add debug wireframe toggle (F1 key)
 
 ## In Progress
+- Add multiple chunks
 
 ## Completed
 - Fix block add/remove functionality so mouse interactions update the world and mesh correctly
