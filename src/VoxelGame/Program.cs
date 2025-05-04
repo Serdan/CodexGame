@@ -97,9 +97,15 @@ class Program
                 if (Raycast(out var hx, out var hy, out var hz, out var px2, out var py2, out var pz2))
                 {
                     if (args.Button == MouseButton.Left)
+                    {
                         world.SetVoxel(hx, hy, hz, 0);
+                    }
                     else
+                    {
                         world.SetVoxel(px2, py2, pz2, 1);
+                    }
+                    // Remesh world after block modification
+                    chunkMeshes = SetupChunkMeshes(world, meshBuilder);
                 }
             }
         };
