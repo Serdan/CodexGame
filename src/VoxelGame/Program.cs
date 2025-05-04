@@ -149,14 +149,15 @@ void main()
     Color = aColor;
     gl_Position = projection * posView;
 }";
-            // Debug fragment shader: visualize ambient occlusion with explicit layout
+            // Debug fragment shader: visualize normals via color encoding
             var fsSource = @"
 #version 330 core
-layout(location = 2) in float AO;
+in vec3 Normal;
 out vec4 FragColor;
 void main()
 {
-    FragColor = vec4(AO, AO, AO, 1.0);
+    vec3 n = normalize(Normal) * 0.5 + 0.5;
+    FragColor = vec4(n, 1.0);
 }";
 
             var vs = GL.CreateShader(ShaderType.VertexShader);
