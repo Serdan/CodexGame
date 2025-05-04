@@ -114,6 +114,8 @@ class Program
 
         // Window load: shaders, buffers, and scene initialization
         int bgProgram = 0, bgVao = 0, bgVbo = 0;
+        // Minimal triangle test program
+        int testProgram = 0, testVao = 0, testVbo = 0;
         window.Load += () =>
         {
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -147,23 +149,14 @@ void main()
     Color = aColor;
     gl_Position = projection * posView;
 }";
+            // Debug fragment shader: pass through vertex color
             var fsSource = @"
 #version 330 core
-in vec3 FragPos;
-in vec3 Normal;
-in float AO;
 in vec3 Color;
 out vec4 FragColor;
-uniform vec3 lightDir;
-uniform vec3 lightColor;
-uniform float ambientStrength;
 void main()
 {
-    vec3 ambient = ambientStrength * lightColor * AO;
-    vec3 norm = normalize(Normal);
-    float diff = max(dot(norm, normalize(-lightDir)), 0.0);
-    vec3 diffuse = diff * lightColor;
-    FragColor = vec4((ambient + diffuse) * Color, 1.0);
+    FragColor = vec4(Color, 1.0);
 }";
 
             var vs = GL.CreateShader(ShaderType.VertexShader);
@@ -307,6 +300,42 @@ void main(){ FragColor = vec4(uColor,1); }";
             GL.BufferData(BufferTarget.ArrayBuffer, reticle.Length * sizeof(float), reticle, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
+            // Minimal triangle test
+            var vsTestSource = @"#version 330 core
+layout(location = 0) in vec2 aPos;
+void main() {
+    gl_Position = vec4(aPos, 0.0, 1.0);
+}";
+            var fsTestSource = @"#version 330 core
+out vec4 FragColor;
+void main() {
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+}";
+            // Compile test shaders
+            var vsTest = GL.CreateShader(ShaderType.VertexShader);
+            GL.ShaderSource(vsTest, vsTestSource);
+            GL.CompileShader(vsTest);
+            CheckShaderCompile(vsTest);
+            var fsTest = GL.CreateShader(ShaderType.FragmentShader);
+            GL.ShaderSource(fsTest, fsTestSource);
+            GL.CompileShader(fsTest);
+            CheckShaderCompile(fsTest);
+            testProgram = GL.CreateProgram();
+            GL.AttachShader(testProgram, vsTest);
+            GL.AttachShader(testProgram, fsTest);
+            GL.LinkProgram(testProgram);
+            CheckProgramLink(testProgram);
+            GL.DeleteShader(vsTest);
+            GL.DeleteShader(fsTest);
+            // Setup test triangle in NDC
+            float[] triVerts = { 0.0f, 0.5f, -0.5f, -0.5f, 0.5f, -0.5f };
+            testVao = GL.GenVertexArray();
+            testVbo = GL.GenBuffer();
+            GL.BindVertexArray(testVao);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, testVbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, triVerts.Length * sizeof(float), triVerts, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 2 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
         };
 
         // Adjust viewport on window resize
@@ -346,6 +375,12 @@ void main(){ FragColor = vec4(uColor,1); }";
             Console.WriteLine($"[Debug] Mesh vertices={mesh.Vertices.Length}, indices={mesh.Indices.Length}, framesDirty={meshDirty}");
             // Clear screen and depth buffer for 3D scene
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            // Debug: draw minimal red triangle to verify pipeline
+            GL.Disable(EnableCap.DepthTest);
+            GL.UseProgram(testProgram);
+            GL.BindVertexArray(testVao);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            GL.Enable(EnableCap.DepthTest);
             GL.UseProgram(shaderProgram);
 
             // Set view and projection once
