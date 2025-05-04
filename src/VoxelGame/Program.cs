@@ -149,10 +149,10 @@ void main()
     Color = aColor;
     gl_Position = projection * posView;
 }";
-            // Debug fragment shader: visualize ambient occlusion
+            // Debug fragment shader: visualize ambient occlusion with explicit layout
             var fsSource = @"
 #version 330 core
-in float AO;
+layout(location = 2) in float AO;
 out vec4 FragColor;
 void main()
 {
