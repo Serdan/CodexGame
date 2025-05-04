@@ -13,12 +13,11 @@
 # Progress
 
 ## To Do
-- Add on-screen GUI (FPS counter, instructions)
 - Provide a usage tutorial or guide
 - Add debug wireframe toggle (F1 key)
 
 ## In Progress
-
+- Add on-screen GUI (FPS counter, instructions)
 ## Completed
 - Fix block add/remove functionality so mouse interactions update the world and mesh correctly
 - Implement multi-chunk world rendering with frustum culling
