@@ -18,27 +18,31 @@ class Program
     /// </summary>
     static void Main()
     {
-        // Build a single terrain chunk with sinusoidal heightmap
-        var chunk = new Chunk();
+        // Build a multi-chunk world with sinusoidal heightmap
+        var world = new World();
         int size = Chunk.Size;
-        for (var x = 0; x < size; x++)
-        for (var z = 0; z < size; z++)
+        int extent = 1; // number of chunks in each direction
+        for (int cx = -extent; cx <= extent; cx++)
+        for (int cz = -extent; cz <= extent; cz++)
         {
-            float fx = x / (float)size * MathF.PI * 2;
-            float fz = z / (float)size * MathF.PI * 2;
-            float hf = (MathF.Sin(fx) + MathF.Sin(fz) + 2f) / 4f;
-            int height = (int)(hf * (size - 1));
-            if (height < 1) height = 1;
-            for (var y = 0; y <= height; y++)
+            for (int x = 0; x < size; x++)
+            for (int z = 0; z < size; z++)
             {
-                byte id = y == height ? (byte)1 : y >= height - 2 ? (byte)2 : (byte)3;
-                chunk.SetVoxel(x, y, z, id);
+                float fx = x / (float)size * MathF.PI * 2;
+                float fz = z / (float)size * MathF.PI * 2;
+                float hf = (MathF.Sin(fx) + MathF.Sin(fz) + 2f) / 4f;
+                int height = (int)(hf * (size - 1));
+                if (height < 1) height = 1;
+                for (int y = 0; y <= height; y++)
+                {
+                    byte id = y == height ? (byte)1 : y >= height - 2 ? (byte)2 : (byte)3;
+                    world.SetVoxel(x + cx * size, y, z + cz * size, id);
+                }
             }
         }
         var meshBuilder = new MeshBuilder();
-        // Initial mesh generation
-        var mesh = meshBuilder.GenerateMesh(chunk);
-        var meshDirty = true;
+        // Prepare to store per-chunk GPU data
+        var chunkRenderData = new Dictionary<ChunkPosition, (int Vao, int IndexCount)>();
         bool wireframe = false;
         // Prepare reticle (simple crosshair)
         int lineShader = 0, lineVao = 0, lineVbo = 0;
