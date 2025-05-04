@@ -60,6 +60,15 @@
 - Git. Use commits as appropriate.
 - Add to list as needed.
 
+## Multi-chunk World Refactor Plan
+
+- Extract world construction into a BuildWorld(int extent) method that populates a World instance with multiple chunks.
+- Extract mesh generation and GPU resource setup into a SetupChunkMeshes(World, MeshBuilder) method that returns a list of (ChunkPosition pos, int vao, int indexCount).
+- In window.Load, call SetupChunkMeshes to initialize VAOs and index counts for each chunk in the GPU.
+- In window.RenderFrame, iterate over the chunk render data, set the model matrix per chunk, bind its VAO, and call DrawElements.
+- Remove legacy single-chunk mesh code once the multi-chunk path is verified.
+- Validate project builds and renders correctly after each refactor step.
+
 # C# style rules
 
 - File-scoped namespaces.
