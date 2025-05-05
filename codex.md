@@ -1,12 +1,14 @@
 # Progress
 
 ## To Do
-## To Do
-- (none)
+- Come up with more gameplay elements.
+- Add borderless fullscreen
 
 ## In Progress
-
+- Add gravity to the player.
+- Collision detection with terrain.
 ## Completed
+- Fix block add/remove to work across all chunks (removed local-bound check in Raycast)
 - Create world generation library: added `VoxelEngine.WorldGeneration` project with noise providers, world generator, integration, and tests
 - Add debug wireframe toggle (F1 key)
 - Fix block add/remove functionality so mouse interactions update the world and mesh correctly

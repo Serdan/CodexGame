@@ -52,6 +52,10 @@ class Program
         window.CursorState = CursorState.Grabbed;
         // Camera for navigation
         var camera = new Camera(new Vector3(2.0f, 2.0f, 5.0f));
+        // Physics state for the player
+        const float gravity = 9.8f;
+        const float jumpSpeed = 5.0f;
+        var velocity = new OpenTK.Mathematics.Vector3(0f, 0f, 0f);
         // Raycast function for voxel selection
         bool Raycast(out int hx, out int hy, out int hz, out int px, out int py, out int pz)
         {
@@ -71,8 +75,6 @@ class Program
                 int x = (int)MathF.Floor(pos.X);
                 int y = (int)MathF.Floor(pos.Y);
                 int z = (int)MathF.Floor(pos.Z);
-                if (x < 0 || x >= Chunk.Size || y < 0 || y >= Chunk.Size || z < 0 || z >= Chunk.Size)
-                    continue;
                 if (world.GetVoxel(x, y, z) != 0)
                 {
                     hx = x; hy = y; hz = z;
@@ -301,14 +303,47 @@ void main(){ FragColor = vec4(uColor,1); }";
             // Exit
             if (input.IsKeyDown(Keys.Escape))
                 window.Close();
-            // Movement
-            if (input.IsKeyDown(Keys.W)) camera.Position += camera.Front * camera.Speed * dt;
-            if (input.IsKeyDown(Keys.S)) camera.Position -= camera.Front * camera.Speed * dt;
-            var right = Vector3.Cross(camera.Front, Vector3.UnitY).Normalized();
-            if (input.IsKeyDown(Keys.D)) camera.Position += right * camera.Speed * dt;
-            if (input.IsKeyDown(Keys.A)) camera.Position -= right * camera.Speed * dt;
-            if (input.IsKeyDown(Keys.Space)) camera.Position += Vector3.UnitY * camera.Speed * dt;
-            if (input.IsKeyDown(Keys.LeftControl)) camera.Position -= Vector3.UnitY * camera.Speed * dt;
+            // Compute horizontal movement direction
+            var forward = camera.Front;
+            forward.Y = 0;
+            forward = forward.Normalized();
+            var rightDir = Vector3.Cross(forward, Vector3.UnitY).Normalized();
+            var moveDir = Vector3.Zero;
+            if (input.IsKeyDown(Keys.W)) moveDir += forward;
+            if (input.IsKeyDown(Keys.S)) moveDir -= forward;
+            if (input.IsKeyDown(Keys.D)) moveDir += rightDir;
+            if (input.IsKeyDown(Keys.A)) moveDir -= rightDir;
+            if (moveDir.LengthSquared > 0) moveDir = moveDir.Normalized();
+            // Check if on ground (block directly below)
+            bool onGround = false;
+            {
+                int bx = (int)MathF.Floor(camera.Position.X);
+                int by = (int)MathF.Floor(camera.Position.Y) - 1;
+                int bz = (int)MathF.Floor(camera.Position.Z);
+                if (world.GetVoxel(bx, by, bz) != 0) onGround = true;
+            }
+            // Jump
+            if (input.IsKeyDown(Keys.Space) && onGround)
+                velocity.Y = jumpSpeed;
+            // Apply gravity
+            velocity.Y -= gravity * dt;
+            // Update position
+            camera.Position += moveDir * camera.Speed * dt;
+            camera.Position.Y += velocity.Y * dt;
+            // Collision: prevent entering blocks
+            {
+                int bx = (int)MathF.Floor(camera.Position.X);
+                int by = (int)MathF.Floor(camera.Position.Y);
+                int bz = (int)MathF.Floor(camera.Position.Z);
+                if (world.GetVoxel(bx, by, bz) != 0)
+                {
+                    if (velocity.Y > 0)
+                        camera.Position.Y = by;       // head hit
+                    else
+                        camera.Position.Y = by + 1;   // landed
+                    velocity.Y = 0;
+                }
+            }
             // Rotation
             if (input.IsKeyDown(Keys.Left)) camera.Yaw -= camera.Sensitivity * dt;
             if (input.IsKeyDown(Keys.Right)) camera.Yaw += camera.Sensitivity * dt;
