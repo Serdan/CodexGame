@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VoxelEngine.Core\VoxelEngine.Core.csproj" />
+    <ProjectReference Include="..\VoxelEngine.WorldGeneration\VoxelEngine.WorldGeneration.csproj" />
   </ItemGroup>
 
   <ItemGroup>
